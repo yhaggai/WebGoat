@@ -22,6 +22,7 @@
 
 package org.owasp.webgoat.lessons.jwt;
 
+import java.sql.PreparedStatement;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.impl.TextCodec;
 import java.sql.ResultSet;
@@ -100,11 +101,10 @@ public class JWTFinalEndpoint extends AssignmentEndpoint {
                       public byte[] resolveSigningKeyBytes(JwsHeader header, Claims claims) {
                         final String kid = (String) header.get("kid");
                         try (var connection = dataSource.getConnection()) {
+                          PreparedStatement statement = connection.prepareStatement("SELECT key FROM jwt_keys WHERE id = ?");
+                          statement.setString(1, kid);
                           ResultSet rs =
-                              connection
-                                  .createStatement()
-                                  .executeQuery(
-                                      "SELECT key FROM jwt_keys WHERE id = '" + kid + "'");
+                              statement.executeQuery();
                           while (rs.next()) {
                             return TextCodec.BASE64.decode(rs.getString(1));
                           }
